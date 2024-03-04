@@ -1,0 +1,191 @@
+---
+title: "Position Paper"
+format: html
+editor: visual
+---
+
+## Packages
+```{r}
+library(dplyr)
+library(readxl)
+library(tidyr)
+```
+
+## Setup
+```{r, setup}
+knitr::opts_knit$set(root.dir = 'C:/Users/rfrost/Documents/Position Paper')
+
+```
+
+## England
+
+### BMI
+```{r}
+
+england_bmi_data <- read_xlsx("England Data/Refined Data.xlsx", sheet = "BMI")
+
+colnames(england_bmi_data)[1] <- "Section"
+
+year_groups <- c(england_bmi_data$Section[grepl(england_bmi_data$Section, pattern = "years")], "All adults")
+
+
+
+england_bmi_data <- england_bmi_data |>
+  mutate(age_group = rep(year_groups, each = 9),
+         keep = (row_number()-1)%%9 != 0) |>
+  filter(keep) |>
+  pivot_longer(cols = colnames(england_bmi_data)[2:(ncol(england_bmi_data))]) |>
+  select(-keep) |>
+  rename(Year = name, Value = value)|>
+  arrange(Year, age_group)
+
+```
+
+### Alcohol_1
+```{r}
+
+england_alcohol1_data <- read_xlsx("England Data/Refined Data.xlsx", sheet = "Alcohol_1")
+
+colnames(england_alcohol1_data)[1] <- "Section"
+
+year_groups <- c(england_alcohol1_data$Section[grepl(england_alcohol1_data$Section, pattern = "years")], "All adults")
+
+england_alcohol1_data <- england_alcohol1_data |>
+  mutate(age_group = rep(year_groups, each = 10)[-80],
+         keep = (row_number()-1)%%10 != 0) |>
+  filter(keep) |>
+  pivot_longer(cols = colnames(england_alcohol1_data)[2:(ncol(england_alcohol1_data))]) |>
+  select(-keep) |>
+  rename(Year = name, Value = value)|>
+  arrange(Year, age_group)
+
+```
+
+## Alcohol_2
+```{r}
+
+england_alcohol2_data <- read_xlsx("England Data/Refined Data.xlsx", sheet = "Alcohol_2")
+
+colnames(england_alcohol2_data)[1] <- "Section"
+
+year_groups <- c(england_alcohol2_data$Section[grepl(england_alcohol2_data$Section, pattern = "years")], "All adults")
+
+england_alcohol2_data <- england_alcohol2_data |>
+  mutate(age_group = rep(year_groups, each = 6),
+         keep = (row_number()-1)%%6 != 0) |>
+  filter(keep) |>
+  pivot_longer(cols = colnames(england_alcohol2_data)[2:(ncol(england_alcohol2_data))]) |>
+  select(-keep) |>
+  rename(Year = name, Value = value)|>
+  arrange(Year, age_group)
+
+```
+
+## Smoking_1
+```{r}
+
+england_smoking1_data <- read_xlsx("England Data/Refined Data.xlsx", sheet = "Smoking_1")
+
+england_smoking1_data_status <- england_smoking1_data[1:3,] |>
+  pivot_longer(cols = colnames(england_smoking1_data)[-1]) |>
+  rename(Year = name) |>
+  arrange(Year)
+
+england_smoking1_data_amt <- england_smoking1_data[6:9,] |>
+  pivot_longer(cols = colnames(england_smoking1_data)[-1]) |>
+  rename(Year = name) |>
+  arrange(Year)
+
+```
+
+## Smoking_2
+```{r}
+england_smoking2_data <- read_xlsx("England Data/Refined Data.xlsx", sheet = "Smoking_2")
+
+statuss <- england_smoking2_data$`Cigarette smoking status`[grepl(england_smoking2_data$`Cigarette smoking status`, pattern= "cigarette")]
+
+england_smoking2_data <- england_smoking2_data |>
+  mutate(Section = rep(statuss, each = 9),
+         keep = ((row_number()-1)%%9 != 0)) |>
+  filter(keep) |>
+  pivot_longer(cols = colnames(england_smoking2_data)[2:(ncol(england_smoking2_data))]) |>
+  select(-keep) |>
+  rename(Year = name, age_group = `Cigarette smoking status`, Value = value) |>
+  arrange(Year, age_group)
+
+
+
+```
+
+## Vaping
+```{r}
+england_vaping_data <- read_xlsx("England Data/Refined Data.xlsx", sheet = "Vaping") |>
+  filter(!is.na(`E-cigarette use`))
+
+statuss <- england_vaping_data$`E-cigarette use`[grepl(england_vaping_data$`E-cigarette use`, pattern = "use")]
+
+england_vaping_data <- england_vaping_data |>
+  mutate(Section = rep(statuss, each = 9),
+         keep = ((row_number()-1)%%9 != 0)) |>
+  filter(keep) |>
+  pivot_longer(cols = colnames(england_vaping_data)[2:(ncol(england_vaping_data))]) |>
+  select(-keep) |>
+  rename(Year = name, age_group = `E-cigarette use`, Value = value) |>
+  arrange(Year, age_group)
+```
+
+## Births_1
+Not sure how to derive age at first birth from this???
+```{r}
+england_births1_data <- read_xlsx("England Data/Refined Data.xlsx", sheet = "Births_1")
+
+```
+
+## Births_2
+```{r}
+
+england_births2_data <- read_xlsx("England Data/Refined Data.xlsx", sheet = "Births_2")
+
+england_births2_data$`Age exact years`[is.na(england_births2_data$`Age exact years`)] <- "Final"
+
+
+
+england_births2_data <- england_births2_data |>
+  filter(`Age exact years`!="Final") |>
+  mutate(`Age exact years` = as.numeric(`Age exact years`)) |>
+  filter(`Year of birth of woman` + `Age exact years` == 2023) |>
+  select(-`Year of birth of woman`) |>
+  rename(Age = `Age exact years`)
+
+
+
+```
+
+## Activity
+```{r}
+england_activity_data <- read_xlsx("England Data/Refined Data.xlsx", sheet = "Activity") |>
+  filter(!is.na(`Summary activity level`))
+
+year_groups <- england_activity_data$`Summary activity level`[grepl(england_activity_data$`Summary activity level`, pattern = "[0-9]")]
+
+england_activity_data <- england_activity_data |>
+  mutate(age_group = rep(year_groups, each = 5),
+         keep = (row_number()-1)%%5!=0) |>
+  filter(keep) |>
+  select(-keep) |>
+  pivot_longer(cols = colnames(england_activity_data)[-1]) |>
+  rename(Year = name, Value = value)
+
+
+```
+
+## Diabetes
+```{r}
+england_diabetes_data <- read_xlsx("England Data/Refined Data.xlsx", sheet = "Diabetes")
+
+england_diabetes_data <- england_diabetes_data |>
+  pivot_longer(cols = colnames(england_diabetes_data)[-1]) |>
+  rename(Year = name, Value = value)
+
+
+```
